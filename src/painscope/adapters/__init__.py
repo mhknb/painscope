@@ -66,4 +66,20 @@ except Exception as _e:
     logger.debug(f"[adapters] ProductHuntAdapter unavailable: {_e}")
 
 
-__all__ = ["REGISTRY", "RawPost", "SourceAdapter"]
+def available_sources() -> list[str]:
+    """Return list of registered adapter names (for CLI help text)."""
+    return REGISTRY.available()
+
+
+def get_adapter(name: str) -> type[SourceAdapter]:
+    """Get an adapter class by name, raising ValueError if not found."""
+    cls = REGISTRY.get(name)
+    if cls is None:
+        available = ", ".join(REGISTRY.available())
+        raise ValueError(
+            f"Unknown source adapter: {name!r}. Available: {available}"
+        )
+    return cls
+
+
+__all__ = ["REGISTRY", "RawPost", "SourceAdapter", "available_sources", "get_adapter"]
