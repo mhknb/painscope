@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: painscope-mcp:latest
+    image: painscope:latest
     container_name: painscope-mcp
     restart: unless-stopped
     entrypoint: ["painscope"]
