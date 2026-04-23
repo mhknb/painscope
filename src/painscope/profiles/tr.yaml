@@ -1,0 +1,73 @@
+# profiles/tr.yaml
+#
+# Turkish-market profile.
+# Scans Reddit communities where Turkish users are active.
+# YouTube and App Store sources are listed but commented out until
+# those adapters are implemented — uncomment when ready.
+#
+# Usage:
+#   painscope topic-scan --profile tr --scan-type pain_points
+#   painscope topic-scan --profile tr --scan-type content_ideas
+
+name: "Turkish Sources"
+description: "Reddit, YouTube, and App Store — Turkish-language communities"
+language: tr
+limit_per_source: 200
+top_n: 20
+scan_type: pain_points
+
+sources:
+  # ── Reddit (working today) ─────────────────────────────────────────
+  - type: reddit
+    target: Turkey
+    label: "r/Turkey"
+
+  - type: reddit
+    target: KGBTR
+    label: "r/KGBTR"
+
+  - type: reddit
+    target: Turkiye
+    label: "r/Turkiye"
+
+  - type: reddit
+    target: istanbul
+    label: "r/istanbul"
+
+  - type: reddit
+    target: girisimciler
+    label: "r/girisimciler"
+
+  - type: reddit
+    target: developeR_tr
+    label: "r/developeR_tr"
+
+  - type: reddit
+    target: TurkeyJobs
+    label: "r/TurkeyJobs"
+
+  - type: reddit
+    target: kriptoTurkiye
+    label: "r/kriptoTurkiye"
+
+  # ── YouTube (uncomment when YouTubeAdapter is implemented) ─────────
+  # - type: youtube
+  #   target: UCVpXCIqVb6oCLr0o_M85xOA   # Barış Özcan
+  #   label: "YouTube: Barış Özcan"
+  #   language: tr
+
+  # - type: youtube
+  #   target: UCVpXCIqVb6oCLr0o_M85xOB   # replace with actual channel IDs
+  #   label: "YouTube: Webrazzi"
+  #   language: tr
+
+  # ── App Store TR (uncomment when AppStoreAdapter is implemented) ───
+  # - type: appstore
+  #   target: 1380200890   # Trendyol
+  #   label: "App Store: Trendyol TR"
+  #   language: tr
+
+  # - type: appstore
+  #   target: 943874949    # Getir
+  #   label: "App Store: Getir TR"
+  #   language: tr

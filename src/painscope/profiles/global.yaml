@@ -1,0 +1,69 @@
+# profiles/global.yaml
+#
+# Global (English-language) profile.
+# Covers the international indie hacker / SaaS / startup ecosystem.
+#
+# Usage:
+#   painscope topic-scan --profile global --scan-type pain_points
+#   painscope topic-scan --profile global --scan-type content_ideas
+
+name: "Global Sources"
+description: "English-language Reddit, Hacker News, Stack Exchange, and App Store"
+language: en
+limit_per_source: 200
+top_n: 20
+scan_type: pain_points
+
+sources:
+  # ── Reddit (working today) ─────────────────────────────────────────
+  - type: reddit
+    target: saas
+    label: "r/saas"
+
+  - type: reddit
+    target: microsaas
+    label: "r/microsaas"
+
+  - type: reddit
+    target: entrepreneur
+    label: "r/entrepreneur"
+
+  - type: reddit
+    target: startups
+    label: "r/startups"
+
+  - type: reddit
+    target: sideproject
+    label: "r/sideproject"
+
+  - type: reddit
+    target: MachineLearning
+    label: "r/MachineLearning"
+
+  - type: reddit
+    target: LocalLLaMA
+    label: "r/LocalLLaMA"
+
+  - type: reddit
+    target: ChatGPT
+    label: "r/ChatGPT"
+
+  # ── Hacker News (uncomment when HackerNewsAdapter is implemented) ──
+  # - type: hackernews
+  #   target: "AI agents"
+  #   label: "HN: AI agents"
+
+  # - type: hackernews
+  #   target: "solo founder"
+  #   label: "HN: solo founder"
+
+  # ── Stack Exchange (uncomment when StackExchangeAdapter is ready) ──
+  # - type: stackexchange
+  #   target: langchain
+  #   label: "SO: langchain"
+
+  # ── App Store EN (uncomment when AppStoreAdapter is ready) ─────────
+  # - type: appstore
+  #   target: 1380200890
+  #   label: "App Store: Trendyol US"
+  #   language: en

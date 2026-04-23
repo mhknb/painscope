@@ -1,0 +1,61 @@
+[project]
+name = "painscope"
+version = "0.1.0"
+description = "Legal-source pain-point and content-idea miner for Reddit, YouTube, App Store reviews, Hacker News, Stack Exchange, and GitHub."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "HB" }]
+
+dependencies = [
+    # CLI
+    "typer[all]>=0.12",
+    "rich>=13.7",
+    # LLM (OpenRouter via OpenAI SDK)
+    "openai>=1.40",
+    # MCP server
+    "mcp>=1.2",
+    # Adapters
+    "praw>=7.7",
+    "httpx>=0.27",
+    "feedparser>=6.0",
+    # Pipeline
+    "sentence-transformers>=3.0",
+    "hdbscan>=0.8.38",
+    "umap-learn>=0.5.6",
+    "numpy>=1.26",
+    "scikit-learn>=1.5",
+    # Config
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    # Language detection + PII
+    "langdetect>=1.0.9",
+    # Output
+    "jinja2>=3.1",
+    # Config files
+    "pyyaml>=6.0",
+    # New adapters
+    "google-play-scraper>=1.2",
+    # Scheduler for recurring scans
+    "apscheduler>=3.10",
+    # Xpoz SDK for Reddit
+    "xpoz>=0.1",
+]
+
+[project.scripts]
+painscope = "painscope.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/painscope"]
+artifacts = ["src/painscope/profiles/*.yaml"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+    "mypy>=1.10",
+]
