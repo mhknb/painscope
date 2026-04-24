@@ -6,10 +6,6 @@ services:
     image: painscope:latest
     container_name: painscope-mcp
     restart: unless-stopped
-    entrypoint: ["sh", "-c"]
-    command: >
-      painscope mcp-serve --host 0.0.0.0 --port 8765 &
-      exec painscope web-serve --host 0.0.0.0 --port 8787
     ports:
       - "${MCP_HOST_PORT:-8767}:8765"
       - "${WEB_BIND_IP:-127.0.0.1}:8787:8787"

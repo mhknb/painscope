@@ -60,12 +60,14 @@ COPY --from=builder /root/.cache/huggingface /opt/hf_cache
 # Data dir (mount a Coolify volume here)
 RUN mkdir -p /data && chown -R painscope:painscope /data /opt/hf_cache
 
+COPY deploy/docker-entrypoint-web-mcp.sh /usr/local/bin/painscope-docker-entrypoint
+RUN chmod 755 /usr/local/bin/painscope-docker-entrypoint
+
 USER painscope
 WORKDIR /home/painscope
 
 EXPOSE 8765 8787
 
-# Default: run MCP server on 0.0.0.0:8765
-# Override with `docker run ... painscope web-serve ...` for the web UI.
-ENTRYPOINT ["painscope"]
-CMD ["mcp-serve", "--host", "0.0.0.0", "--port", "8765"]
+# Coolify (and similar) sometimes deploy with an empty command; Typer then exits with
+# "Missing command." Use a shell entrypoint so default is MCP + web without relying on CMD.
+ENTRYPOINT ["/usr/local/bin/painscope-docker-entrypoint"]
