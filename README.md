@@ -84,7 +84,14 @@ ssh -L 8787:127.0.0.1:8787 root@<server>
 
 1. In Coolify, create a new **Docker Compose** resource.
 2. Point it at your repo (or paste `docker-compose.yml`).
-3. Set environment variables in the Coolify UI (do not commit `.env`).
+3. Set environment variables in the Coolify UI (do not commit `.env`). At minimum for a public web UI:
+   ```env
+   WEB_BIND_IP=0.0.0.0
+   MCP_HOST_PORT=8767
+   PAINSCOPE_WEB_PASSWORD=<strong-password>
+   OPENROUTER_API_KEY=<your-key>
+   ```
+   `WEB_BIND_IP` and `MCP_HOST_PORT` are declared under `environment` in `docker-compose.yml` so Coolify can detect them; they also drive the published ports.
 4. Set the `painscope_data` and `painscope_hf_cache` volumes to persistent.
 5. Prefer keeping the web UI private behind an SSH tunnel, VPN, or Coolify internal network.
    If you expose it through a public domain, set `WEB_BIND_IP=0.0.0.0` and a strong `PAINSCOPE_WEB_PASSWORD`.
