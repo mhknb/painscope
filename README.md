@@ -84,7 +84,7 @@ ssh -L 8787:127.0.0.1:8787 root@<server>
 
 1. In Coolify, create a new **Docker Compose** resource.
 2. Point it at your repo (or paste `docker-compose.yml`).
-3. Leave **custom start command** / **command override** empty unless you know you need it. An empty command with the old `ENTRYPOINT ["painscope"]` image caused Typer to print `Missing command.` and a restart loop; the image now uses a shell entrypoint that starts MCP + web by default.
+3. Leave **custom start command** / **command override** empty unless you know you need it. Also clear **Custom Docker Options** if you ever set `--entrypoint painscope` (that forces Typer to run with no subcommand → `Missing command.` + restart loop). The image uses `/usr/local/bin/painscope-docker-entrypoint`; `docker-compose.yml` sets the same `entrypoint` so Compose deploys match the Dockerfile.
 4. Set environment variables in the Coolify UI (do not commit `.env`). At minimum for a public web UI:
    ```env
    WEB_BIND_IP=0.0.0.0
