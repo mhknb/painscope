@@ -15,6 +15,9 @@ dependencies = [
     "openai>=1.40",
     # MCP server
     "mcp>=1.2",
+    # Personal web UI
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
     # Adapters
     "praw>=7.7",
     "httpx>=0.27",
@@ -51,7 +54,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/painscope"]
-artifacts = ["src/painscope/profiles/*.yaml"]
+artifacts = ["src/painscope/profiles/*.yaml", "src/painscope/web/static/**"]
 
 [tool.uv]
 dev-dependencies = [

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Painscope</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=Space+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">P</div>
+        <div>
+          <h1>Painscope</h1>
+          <p>Personal Research</p>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Primary">
+        <a href="#/" data-route="dashboard">Dashboard</a>
+        <a href="#/new" data-route="new">New Scan</a>
+        <a href="#/history" data-route="history">History</a>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="status-dot"></span>
+        <span id="health-status">Checking API</span>
+      </div>
+    </aside>
+
+    <header class="topbar">
+      <span class="eyebrow">Private workspace</span>
+      <a class="topbar-link" href="/api/health" target="_blank" rel="noreferrer">API status</a>
+    </header>
+
+    <main class="workspace" id="app">
+      <section class="panel">
+        <p class="muted">Loading Painscope...</p>
+      </section>
+    </main>
+
+    <template id="loading-template">
+      <section class="panel">
+        <p class="muted">Loading...</p>
+      </section>
+    </template>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
+

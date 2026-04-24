@@ -57,9 +57,9 @@ RUN mkdir -p /data && chown -R painscope:painscope /data /opt/hf_cache
 USER painscope
 WORKDIR /home/painscope
 
-EXPOSE 8765
+EXPOSE 8765 8787
 
 # Default: run MCP server on 0.0.0.0:8765
-# Override with `docker run ... painscope scan ...` for CLI usage
+# Override with `docker run ... painscope web-serve ...` for the web UI.
 ENTRYPOINT ["painscope"]
 CMD ["mcp-serve", "--host", "0.0.0.0", "--port", "8765"]

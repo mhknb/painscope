@@ -56,6 +56,13 @@ class Settings(BaseSettings):
     # ── Storage ──────────────────────────────────────────────────────────
     data_dir: Path = Field(default=Path.home() / ".painscope")
 
+    # ── Personal web UI ──────────────────────────────────────────────────
+    web_password: str | None = Field(
+        default=None,
+        validation_alias="PAINSCOPE_WEB_PASSWORD",
+        description="Optional password for the personal web UI.",
+    )
+
     @property
     def db_path(self) -> Path:
         return self.data_dir / "painscope.db"

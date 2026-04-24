@@ -70,7 +70,14 @@ First run downloads the embedding model (~500MB, one-time).
 cp .env.example .env
 # Edit .env
 docker compose build
-docker compose up painscope-mcp
+docker compose up -d
+```
+
+MCP runs on `http://localhost:8765/mcp`; the personal web UI runs on `http://127.0.0.1:8787` by default.
+On a VPS, keep `WEB_BIND_IP=127.0.0.1` and use an SSH tunnel:
+
+```bash
+ssh -L 8787:127.0.0.1:8787 root@<server>
 ```
 
 ### Install (Coolify)
@@ -105,13 +112,16 @@ painscope show 20260422-103015-reddit-r_Turkey
 
 # Start MCP server (for agent use)
 painscope mcp-serve --host 0.0.0.0 --port 8765
+
+# Start personal web UI
+painscope web-serve --host 0.0.0.0 --port 8787
 ```
 
 Every scan writes a Markdown report to `~/.painscope/reports/<scan_id>.md` and persists the full result to SQLite at `~/.painscope/painscope.db`.
 
 ### MCP (from OpenClaw, OpenCode, Claude Desktop, Cursor, etc.)
 
-Once `painscope mcp-serve` is running (or the Docker container is up), point any MCP-aware client at `http://<host>:8765/sse`.
+Once `painscope mcp-serve` is running (or the Docker container is up), point any MCP-aware client at `http://<host>:8765/mcp`.
 
 Tools exposed:
 - `run_scan(source, target, scan_type, language, limit, top_n, model)` — run a new scan

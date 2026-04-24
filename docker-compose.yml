@@ -6,11 +6,15 @@ services:
     image: painscope:latest
     container_name: painscope-mcp
     restart: unless-stopped
-    entrypoint: ["painscope"]
-    command: ["mcp-serve", "--host", "0.0.0.0", "--port", "8765"]
+    entrypoint: ["sh", "-c"]
+    command: >
+      painscope mcp-serve --host 0.0.0.0 --port 8765 &
+      exec painscope web-serve --host 0.0.0.0 --port 8787
     ports:
       - "8765:8765"
+      - "${WEB_BIND_IP:-127.0.0.1}:8787:8787"
     environment:
+      DATA_DIR: /data
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       XPOZ_API_KEY: ${XPOZ_API_KEY:-}
       YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
@@ -19,8 +23,9 @@ services:
       LLM_MODEL_TR: ${LLM_MODEL_TR:-openai/gpt-oss-20b:free}
       LLM_MODEL_EN: ${LLM_MODEL_EN:-openai/gpt-oss-20b:free}
       LLM_MODEL_FALLBACK: ${LLM_MODEL_FALLBACK:-openai/gpt-oss-20b:free}
+      PAINSCOPE_WEB_PASSWORD: ${PAINSCOPE_WEB_PASSWORD:-}
     volumes:
-      - painscope_data:/root/.painscope
+      - painscope_data:/data
     healthcheck:
       test:
         - "CMD"
@@ -38,6 +43,7 @@ services:
             }
           )
           urllib.request.urlopen(req, timeout=5)
+          urllib.request.urlopen('http://localhost:8787/api/health', timeout=5)
       interval: 30s
       timeout: 10s
       retries: 3

@@ -11,17 +11,19 @@ import json
 import logging
 import sqlite3
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from painscope.config import get_settings
-from painscope.pipeline.orchestrator import ScanResult
+
+if TYPE_CHECKING:
+    from painscope.pipeline.orchestrator import ScanResult
 
 logger = logging.getLogger(__name__)
 
 
 def _connect() -> sqlite3.Connection:
     db_path = get_settings().db_path
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, timeout=10)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     return conn
@@ -79,7 +81,7 @@ def init_db() -> None:
             pass  # column already exists
 
 
-def save_scan(result: ScanResult, *, topic_name: str | None = None) -> None:
+def save_scan(result: "ScanResult", *, topic_name: str | None = None) -> None:
     init_db()
     with _connect() as conn:
         conn.execute(

@@ -200,5 +200,16 @@ def mcp_serve(
     run_mcp_server(host=host, port=port)
 
 
+@app.command("web-serve")
+def web_serve(
+    host: str = typer.Option("0.0.0.0"),
+    port: int = typer.Option(8787),
+) -> None:
+    """Start the personal web UI."""
+    import uvicorn
+
+    uvicorn.run("painscope.web.app:create_app", factory=True, host=host, port=port)
+
+
 if __name__ == "__main__":
     app()
