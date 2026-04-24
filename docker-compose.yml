@@ -26,6 +26,7 @@ services:
       PAINSCOPE_WEB_PASSWORD: ${PAINSCOPE_WEB_PASSWORD:-}
     volumes:
       - painscope_data:/data
+      - painscope_hf_cache:/opt/hf_cache
     healthcheck:
       test:
         - "CMD"
@@ -51,3 +52,4 @@ services:
 
 volumes:
   painscope_data:
+  painscope_hf_cache:

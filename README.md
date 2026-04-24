@@ -62,7 +62,7 @@ pip install -e .
 painscope --help
 ```
 
-First run downloads the embedding model (~500MB, one-time).
+First scan downloads the embedding model (~500MB, one-time) unless you build the Docker image with `PRELOAD_EMBEDDING_MODEL=true`.
 
 ### Install (Docker)
 
@@ -85,9 +85,10 @@ ssh -L 8787:127.0.0.1:8787 root@<server>
 1. In Coolify, create a new **Docker Compose** resource.
 2. Point it at your repo (or paste `docker-compose.yml`).
 3. Set environment variables in the Coolify UI (do not commit `.env`).
-4. Set the `painscope-data` volume to persistent.
-5. Do NOT assign a public domain — keep it internal to your Coolify network so OpenClaw/OpenCode can reach `http://painscope-mcp:8765` but the public internet can't.
-6. Deploy.
+4. Set the `painscope_data` and `painscope_hf_cache` volumes to persistent.
+5. Prefer keeping the web UI private behind an SSH tunnel, VPN, or Coolify internal network.
+   If you expose it through a public domain, set `WEB_BIND_IP=0.0.0.0` and a strong `PAINSCOPE_WEB_PASSWORD`.
+6. Deploy. The first scan may take longer while the embedding model is downloaded.
 
 ## Usage
 

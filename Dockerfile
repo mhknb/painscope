@@ -8,6 +8,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
+ARG PRELOAD_EMBEDDING_MODEL=false
+
 # System deps needed by hdbscan/umap-learn/sentence-transformers
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
@@ -25,12 +27,16 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 RUN pip install --upgrade pip \
+    && pip install filelock fsspec jinja2 networkx sympy typing-extensions \
+    && pip install --index-url https://download.pytorch.org/whl/cpu torch \
     && pip install .
 
-# Pre-download the default embedding model so first run doesn't stall.
-# (If you change EMBEDDING_MODEL at runtime, it'll download on first use.)
-RUN python -c "from sentence_transformers import SentenceTransformer; \
-               SentenceTransformer('intfloat/multilingual-e5-base')"
+# Optional: pre-download the default embedding model. Keep this disabled in
+# Coolify by default so image builds stay small and reliable.
+RUN mkdir -p /root/.cache/huggingface \
+    && if [ "$PRELOAD_EMBEDDING_MODEL" = "true" ]; then \
+        python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-base')"; \
+    fi
 
 # ── Stage 2: runtime ────────────────────────────────────────────────────
 FROM python:3.11-slim AS runtime
