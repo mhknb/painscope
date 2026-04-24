@@ -45,7 +45,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:$PATH" \
     DATA_DIR=/data \
-    HF_HOME=/opt/hf_cache
+    HF_HOME=/opt/hf_cache \
+    PAINSCOPE_CONTAINER_DEFAULT=1
 
 # Minimal runtime deps (libgomp needed by hdbscan/umap)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -60,14 +61,11 @@ COPY --from=builder /root/.cache/huggingface /opt/hf_cache
 # Data dir (mount a Coolify volume here)
 RUN mkdir -p /data && chown -R painscope:painscope /data /opt/hf_cache
 
-COPY deploy/docker-entrypoint-web-mcp.sh /usr/local/bin/painscope-docker-entrypoint
-RUN chmod 755 /usr/local/bin/painscope-docker-entrypoint
-
 USER painscope
 WORKDIR /home/painscope
 
 EXPOSE 8765 8787
 
-# Coolify (and similar) sometimes deploy with an empty command; Typer then exits with
-# "Missing command." Use a shell entrypoint so default is MCP + web without relying on CMD.
-ENTRYPOINT ["/usr/local/bin/painscope-docker-entrypoint"]
+# Bare `painscope` (no Typer subcommand) starts MCP + web when PAINSCOPE_CONTAINER_DEFAULT=1
+# (see painscope.cli:main). Survives platforms that override Docker ENTRYPOINT/CMD.
+ENTRYPOINT ["/opt/venv/bin/painscope"]

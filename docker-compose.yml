@@ -6,8 +6,6 @@ services:
     image: painscope:latest
     container_name: painscope-mcp
     restart: unless-stopped
-    # Force startup even if Coolify (or another layer) injects a bare `painscope` command.
-    entrypoint: ["/usr/local/bin/painscope-docker-entrypoint"]
     ports:
       - "${MCP_HOST_PORT:-8767}:8765"
       - "${WEB_BIND_IP:-127.0.0.1}:8787:8787"

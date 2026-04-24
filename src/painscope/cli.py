@@ -11,6 +11,9 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import shutil
+import subprocess
 import sys
 
 import typer
@@ -211,5 +214,29 @@ def web_serve(
     uvicorn.run("painscope.web.app:create_app", factory=True, host=host, port=port)
 
 
+def _start_mcp_and_web_for_container() -> None:
+    """Coolify sometimes runs `painscope` with no subcommand; start MCP + web."""
+    exe = shutil.which("painscope") or sys.argv[0]
+    proc = subprocess.Popen(
+        [exe, "mcp-serve", "--host", "0.0.0.0", "--port", "8765"],
+        stdin=subprocess.DEVNULL,
+        stdout=sys.stderr,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+    )
+    if proc.poll() is not None:
+        rc = proc.returncode
+        if rc:
+            raise SystemExit(rc)
+    os.execvp(exe, [exe, "web-serve", "--host", "0.0.0.0", "--port", "8787"])
+
+
+def main() -> None:
+    if os.environ.get("PAINSCOPE_CONTAINER_DEFAULT") == "1" and len(sys.argv) < 2:
+        _start_mcp_and_web_for_container()
+    else:
+        app()
+
+
 if __name__ == "__main__":
-    app()
+    main()

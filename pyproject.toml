@@ -46,7 +46,7 @@ dependencies = [
 ]
 
 [project.scripts]
-painscope = "painscope.cli:app"
+painscope = "painscope.cli:main"
 
 [build-system]
 requires = ["hatchling"]
