@@ -73,7 +73,7 @@ docker compose build
 docker compose up -d
 ```
 
-MCP runs on `http://localhost:8765/mcp`; the personal web UI runs on `http://127.0.0.1:8787` by default.
+MCP runs on `http://localhost:8767/mcp` by default; the personal web UI runs on `http://127.0.0.1:8787` by default.
 On a VPS, keep `WEB_BIND_IP=127.0.0.1` and use an SSH tunnel:
 
 ```bash

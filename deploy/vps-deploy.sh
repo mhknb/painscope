@@ -10,6 +10,7 @@
 #   VPS_PASS  - SSH password (will prompt if not set)
 #   REMOTE_DIR - Remote directory (default: /root/painscope)
 #   WEB_BIND_IP - Web UI bind address (default: 127.0.0.1)
+#   MCP_HOST_PORT - Host port for MCP endpoint (default: 8767)
 
 set -euo pipefail
 
@@ -61,6 +62,8 @@ fi
 
 WEB_BIND_IP="${WEB_BIND_IP:-$(env_value WEB_BIND_IP)}"
 WEB_BIND_IP="${WEB_BIND_IP:-127.0.0.1}"
+MCP_HOST_PORT="${MCP_HOST_PORT:-$(env_value MCP_HOST_PORT)}"
+MCP_HOST_PORT="${MCP_HOST_PORT:-8767}"
 WEB_PASSWORD="${PAINSCOPE_WEB_PASSWORD:-$(env_value PAINSCOPE_WEB_PASSWORD)}"
 
 if [[ "$WEB_BIND_IP" != "127.0.0.1" && "$WEB_BIND_IP" != "localhost" && -z "$WEB_PASSWORD" ]]; then
@@ -111,7 +114,7 @@ wait_for_health() {
 
 wait_for_health "painscope-mcp"
 
-log "Deploy complete. MCP endpoint: http://${VPS_HOST}:8765/mcp"
+log "Deploy complete. MCP endpoint: http://${VPS_HOST}:${MCP_HOST_PORT}/mcp"
 if [[ "$WEB_BIND_IP" == "127.0.0.1" || "$WEB_BIND_IP" == "localhost" ]]; then
   log "Web UI is bound to localhost on the VPS."
   log "Use: ssh -L 8787:127.0.0.1:8787 ${VPS_USER}@${VPS_HOST}"
@@ -123,6 +126,6 @@ log ""
 log "To add to Hermes (~/.hermes/config.yaml):"
 log "  mcp_servers:"
 log "    painscope:"
-log "      url: \"http://${VPS_HOST}:8765/mcp\""
+log "      url: \"http://${VPS_HOST}:${MCP_HOST_PORT}/mcp\""
 log "      enabled: true"
 log "      timeout: 300"
