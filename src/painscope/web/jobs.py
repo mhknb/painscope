@@ -117,19 +117,6 @@ class ScanJobRunner:
                 error="Scan failed. Check server logs for details.",
             )
 
-
-def _build_completion_warning(result: Any) -> str | None:
-    total_fetched = int(getattr(result, "total_posts_fetched", 0) or 0)
-    total_used = int(getattr(result, "total_posts_used", 0) or 0)
-    num_clusters = int(getattr(result, "num_clusters", 0) or 0)
-    if total_fetched == 0:
-        return "Scan completed but no posts were fetched. Check source/API credentials and source targets."
-    if total_used == 0:
-        return "Scan completed but all fetched posts were filtered out (language/length/dedup). Try increasing limit per source."
-    if num_clusters == 0:
-        return "Scan completed but no stable clusters were found. Increase limit per source for stronger signal."
-    return None
-
     def _update(self, job_id: str, **changes: Any) -> None:
         with self._lock:
             job = self._jobs[job_id]
@@ -150,6 +137,19 @@ def _build_completion_warning(result: Any) -> str | None:
         ]
         for job in removable[: len(self._jobs) - self._max_jobs]:
             self._jobs.pop(job.job_id, None)
+
+
+def _build_completion_warning(result: Any) -> str | None:
+    total_fetched = int(getattr(result, "total_posts_fetched", 0) or 0)
+    total_used = int(getattr(result, "total_posts_used", 0) or 0)
+    num_clusters = int(getattr(result, "num_clusters", 0) or 0)
+    if total_fetched == 0:
+        return "Scan completed but no posts were fetched. Check source/API credentials and source targets."
+    if total_used == 0:
+        return "Scan completed but all fetched posts were filtered out (language/length/dedup). Try increasing limit per source."
+    if num_clusters == 0:
+        return "Scan completed but no stable clusters were found. Increase limit per source for stronger signal."
+    return None
 
 
 def build_topic_config(request: StartScanRequest) -> TopicConfig:
