@@ -113,7 +113,8 @@ def run_scan(
 
     # 1. Fetch
     logger.info(f"[{scan_id}] Fetching from {source}:{target}")
-    adapter = get_adapter(source)
+    adapter_cls = get_adapter(source)
+    adapter = adapter_cls()
     raw_posts = list(adapter.fetch(target, limit=limit, language=language))
     logger.info(f"[{scan_id}] Fetched {len(raw_posts)} raw posts")
 
@@ -194,7 +195,8 @@ def _fetch_one_source(
     """Fetch a single source. Returns (posts, stats_dict)."""
     from painscope.topics import SourceConfig  # local import to avoid circular
 
-    adapter = get_adapter(source_cfg.type)
+    adapter_cls = get_adapter(source_cfg.type)
+    adapter = adapter_cls()
     lang = source_cfg.language or default_language
     limit = source_cfg.limit or default_limit
     label = source_cfg.resolved_label
