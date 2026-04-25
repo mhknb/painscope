@@ -7,8 +7,8 @@ services:
     container_name: painscope-mcp
     restart: unless-stopped
     ports:
-      - "${MCP_HOST_PORT:-8767}:8765"
       - "${WEB_BIND_IP:-127.0.0.1}:8787:8787"
+      - "${MCP_HOST_PORT:-8767}:8765"
     environment:
       # Coolify / compose: listed here so deploy UIs pick them up; ports use the same vars.
       WEB_BIND_IP: ${WEB_BIND_IP:-127.0.0.1}
