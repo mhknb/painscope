@@ -118,6 +118,14 @@ def create_app(job_runner: ScanJobRunner | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail="Scan not found.")
         return scan
 
+    @app.post("/api/telemetry")
+    def telemetry(payload: dict[str, Any]) -> dict[str, Any]:
+        # Keep telemetry minimal and non-blocking for UI metrics collection.
+        event = payload.get("event")
+        if not isinstance(event, str) or not event:
+            raise HTTPException(status_code=400, detail="Invalid telemetry payload.")
+        return {"ok": True}
+
     app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
     return app
 
