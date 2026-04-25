@@ -47,6 +47,7 @@ def init_db() -> None:
                 num_clusters INTEGER,
                 duration_seconds REAL,
                 insights_json TEXT NOT NULL,
+                sources_json TEXT,
                 topic_name TEXT
             );
             CREATE INDEX IF NOT EXISTS idx_scans_source_target
@@ -79,6 +80,12 @@ def init_db() -> None:
             conn.commit()
         except sqlite3.OperationalError:
             pass  # column already exists
+        # Migration: add sources_json column to older DBs that lack it
+        try:
+            conn.execute("ALTER TABLE scans ADD COLUMN sources_json TEXT")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass  # column already exists
 
 
 def save_scan(result: "ScanResult", *, topic_name: str | None = None) -> None:
@@ -90,8 +97,8 @@ def save_scan(result: "ScanResult", *, topic_name: str | None = None) -> None:
                 scan_id, source, target, scan_type, language,
                 started_at, completed_at, model_used,
                 total_posts_fetched, total_posts_used, num_clusters,
-                duration_seconds, insights_json, topic_name
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                duration_seconds, insights_json, sources_json, topic_name
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 result.scan_id,
@@ -107,6 +114,7 @@ def save_scan(result: "ScanResult", *, topic_name: str | None = None) -> None:
                 result.num_clusters,
                 result.duration_seconds,
                 json.dumps(result.insights, ensure_ascii=False),
+                json.dumps(getattr(result, "sources", []), ensure_ascii=False),
                 topic_name,
             ),
         )
@@ -123,6 +131,8 @@ def get_scan(scan_id: str) -> dict | None:
             return None
         result = dict(row)
         result["insights"] = json.loads(result.pop("insights_json"))
+        sources_raw = result.pop("sources_json", None)
+        result["sources"] = json.loads(sources_raw) if sources_raw else []
         return result
 
 
@@ -180,6 +190,8 @@ def get_scans_for_topic(topic_name: str, *, limit: int = 20) -> list[dict]:
         for row in rows:
             d = dict(row)
             d["insights"] = json.loads(d.pop("insights_json"))
+            sources_raw = d.pop("sources_json", None)
+            d["sources"] = json.loads(sources_raw) if sources_raw else []
             results.append(d)
         return results
 
