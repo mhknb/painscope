@@ -246,7 +246,8 @@ def run_topic_scan(
     source_stats: list[dict] = []
     max_workers = min(len(config.sources), 5)
 
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    executor = ThreadPoolExecutor(max_workers=max_workers)
+    try:
         handled_futures: set[Any] = set()
         futures = {
             executor.submit(
@@ -299,6 +300,9 @@ def run_topic_scan(
                     "error": f"Timeout after {FETCH_TIMEOUT_SECONDS}s",
                 }
             )
+    finally:
+        # Do not block scan completion on hung source threads.
+        executor.shutdown(wait=False, cancel_futures=True)
 
     total_fetched = len(all_posts)
     logger.info(f"[{scan_id}] Total fetched: {total_fetched} posts from {len(source_stats)} sources")
