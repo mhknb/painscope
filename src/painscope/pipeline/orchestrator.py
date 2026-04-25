@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import math
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Literal
@@ -23,6 +23,7 @@ from painscope.pipeline.preprocess import preprocess
 from painscope.pipeline.summarize import ContentIdea, PainPoint, summarize_cluster
 
 logger = logging.getLogger(__name__)
+FETCH_TIMEOUT_SECONDS = 120
 
 ScanType = Literal["pain_points", "content_ideas"]
 
@@ -240,6 +241,7 @@ def run_topic_scan(config: Any) -> ScanResult:
     max_workers = min(len(config.sources), 5)
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        handled_futures: set[Any] = set()
         futures = {
             executor.submit(
                 _fetch_one_source,
@@ -249,17 +251,38 @@ def run_topic_scan(config: Any) -> ScanResult:
             ): src
             for src in config.sources
         }
-        for future in as_completed(futures):
-            src = futures[future]
-            try:
-                posts, stats = future.result()
-                all_posts.extend(posts)
-                source_stats.append(stats)
-                logger.info(f"[{scan_id}] ✓ {stats['label']}: {stats['posts_fetched']} posts")
-            except Exception as e:
-                label = getattr(src, "resolved_label", str(src))
-                logger.error(f"[{scan_id}] ✗ {label}: {e}")
-                source_stats.append({"label": label, "posts_fetched": 0, "error": str(e)})
+        try:
+            for future in as_completed(futures, timeout=FETCH_TIMEOUT_SECONDS):
+                handled_futures.add(future)
+                src = futures[future]
+                try:
+                    posts, stats = future.result()
+                    all_posts.extend(posts)
+                    source_stats.append(stats)
+                    logger.info(f"[{scan_id}] ✓ {stats['label']}: {stats['posts_fetched']} posts")
+                except Exception as e:
+                    label = getattr(src, "resolved_label", str(src))
+                    logger.error(f"[{scan_id}] ✗ {label}: {e}")
+                    source_stats.append({"label": label, "posts_fetched": 0, "error": str(e)})
+        except FuturesTimeoutError:
+            logger.error(
+                f"[{scan_id}] Source fetch timed out after {FETCH_TIMEOUT_SECONDS}s. "
+                "Marking unfinished sources as timeout."
+            )
+
+        for future, src in futures.items():
+            if future in handled_futures:
+                continue
+            label = getattr(src, "resolved_label", str(src))
+            if not future.done():
+                future.cancel()
+            source_stats.append(
+                {
+                    "label": label,
+                    "posts_fetched": 0,
+                    "error": f"Timeout after {FETCH_TIMEOUT_SECONDS}s",
+                }
+            )
 
     total_fetched = len(all_posts)
     logger.info(f"[{scan_id}] Total fetched: {total_fetched} posts from {len(source_stats)} sources")
