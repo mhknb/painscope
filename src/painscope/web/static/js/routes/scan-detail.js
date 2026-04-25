@@ -25,10 +25,13 @@ export async function renderScanDetail(app, scanId) {
       <section class="panel stack">
         <div class="metrics">
           <div class="metric"><span class="metric-label">Type</span><strong>${escapeHtml(scan.scan_type)}</strong></div>
+          <div class="metric"><span class="metric-label">Fetched</span><strong>${number(scan.total_posts_fetched)}</strong></div>
           <div class="metric"><span class="metric-label">Posts</span><strong>${number(scan.total_posts_used)}</strong></div>
           <div class="metric"><span class="metric-label">Clusters</span><strong>${number(scan.num_clusters)}</strong></div>
           <div class="metric"><span class="metric-label">Duration</span><strong>${duration(scan.duration_seconds)}</strong></div>
         </div>
+        ${scan.total_posts_used === 0 ? `<div class="error-box">Scan tamamlandı fakat kullanılabilir post bulunamadı. Limit per source değerini 100+ deneyin ve kaynak API ayarlarını kontrol edin.</div>` : ""}
+        ${renderSourceStats(scan.sources)}
       </section>
       <section class="insight-grid" style="margin-top: 12px">
         ${(scan.insights || [])
@@ -44,6 +47,35 @@ export async function renderScanDetail(app, scanId) {
   } catch (err) {
     app.innerHTML = `<div class="error-box">${escapeHtml(err.message)}</div>`;
   }
+}
+
+function renderSourceStats(sources) {
+  if (!Array.isArray(sources) || sources.length === 0) {
+    return "";
+  }
+  return `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Fetched</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sources
+            .map((item) => {
+              const label = item.label || `${item.type || "source"}:${item.target || "-"}`;
+              const fetched = Number(item.posts_fetched || 0);
+              const status = item.error ? `Error: ${item.error}` : "OK";
+              return `<tr><td>${escapeHtml(label)}</td><td class="mono">${number(fetched)}</td><td>${escapeHtml(status)}</td></tr>`;
+            })
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 function bindInsightActions() {
