@@ -43,14 +43,13 @@ class XpozRedditAdapter(SourceAdapter):
     name = "reddit"
 
     def __init__(self) -> None:
-        from xpoz import Xpoz
         settings = get_settings()
         if not settings.xpoz_api_key:
             raise RuntimeError(
                 "Xpoz API key missing. Set XPOZ_API_KEY in .env.\n"
                 "Sign up at https://xpoz.ai for a free key."
             )
-        self._client = Xpoz(api_key=settings.xpoz_api_key)
+        self._client = _build_xpoz_client(settings.xpoz_api_key)
 
     def validate_target(self, target: str) -> str:
         target = target.strip().lstrip("r/")
@@ -163,3 +162,24 @@ class XpozRedditAdapter(SourceAdapter):
                     "source_label": f"reddit:r/{subreddit}",
                 },
             )
+
+
+def _build_xpoz_client(api_key: str):
+    """Build an Xpoz client across old/new SDK naming."""
+    try:
+        # xpoz >= 0.5
+        from xpoz import XpozClient
+
+        return XpozClient(api_key=api_key)
+    except ImportError:
+        pass
+
+    try:
+        # Older SDK versions
+        from xpoz import Xpoz
+
+        return Xpoz(api_key=api_key)
+    except ImportError as exc:
+        raise RuntimeError(
+            "Unsupported xpoz SDK version. Install a release exposing XpozClient or Xpoz."
+        ) from exc
