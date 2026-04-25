@@ -40,4 +40,7 @@ class JobSnapshot(BaseModel):
     topic_name: str | None = None
     scan_id: str | None = None
     error: str | None = None
+    stage: str | None = None
+    progress_percent: int | None = None
+    recent_logs: list[str] = Field(default_factory=list)
 

@@ -5,7 +5,7 @@ import re
 import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
@@ -43,6 +43,9 @@ class ScanJob:
     topic_name: str | None = None
     scan_id: str | None = None
     error: str | None = None
+    stage: str | None = None
+    progress_percent: int | None = None
+    recent_logs: list[str] = field(default_factory=list)
 
     def snapshot(self) -> JobSnapshot:
         return JobSnapshot(
@@ -55,6 +58,9 @@ class ScanJob:
             topic_name=self.topic_name,
             scan_id=self.scan_id,
             error=self.error,
+            stage=self.stage,
+            progress_percent=self.progress_percent,
+            recent_logs=list(self.recent_logs or []),
         )
 
 
@@ -75,6 +81,9 @@ class ScanJobRunner:
             created_at=datetime.now(timezone.utc),
             profile=request.profile,
             topic_name=config.name,
+            stage="queued",
+            progress_percent=0,
+            recent_logs=["Job queued."],
         )
         with self._lock:
             self._jobs[job.job_id] = job
@@ -92,14 +101,19 @@ class ScanJobRunner:
         from painscope.pipeline.orchestrator import run_topic_scan
         from painscope.storage import save_scan
 
-        self._update(job_id, status="running", started_at=datetime.now(timezone.utc))
+        self._update(job_id, status="running", started_at=datetime.now(timezone.utc), stage="starting", progress_percent=5)
+        self._append_log(job_id, f"Starting scan for topic '{config.name}'.")
         try:
-            result = run_topic_scan(config)
+            result = run_topic_scan(config, progress_hook=self._progress_hook(job_id))
+            self._append_log(job_id, f"Fetched {getattr(result, 'total_posts_fetched', 0)} posts.")
             save_scan(result, topic_name=config.name)
+            self._append_log(job_id, "Saved scan to storage.")
             try:
                 save_report(result)
+                self._append_log(job_id, "Markdown report generated.")
             except Exception as exc:
                 logger.warning("Markdown report save failed for %s: %s", result.scan_id, exc)
+                self._append_log(job_id, f"Markdown report save warning: {exc}")
             warning = _build_completion_warning(result)
             self._update(
                 job_id,
@@ -107,7 +121,10 @@ class ScanJobRunner:
                 completed_at=datetime.now(timezone.utc),
                 scan_id=result.scan_id,
                 error=warning,
+                stage="completed",
+                progress_percent=100,
             )
+            self._append_log(job_id, "Scan completed.")
         except Exception:
             logger.exception("Scan job %s failed", job_id)
             self._update(
@@ -115,7 +132,10 @@ class ScanJobRunner:
                 status="failed",
                 completed_at=datetime.now(timezone.utc),
                 error="Scan failed. Check server logs for details.",
+                stage="failed",
+                progress_percent=100,
             )
+            self._append_log(job_id, "Scan failed.")
 
     def _update(self, job_id: str, **changes: Any) -> None:
         with self._lock:
@@ -123,6 +143,22 @@ class ScanJobRunner:
             for key, value in changes.items():
                 setattr(job, key, value)
             self._trim_locked()
+
+    def _append_log(self, job_id: str, message: str) -> None:
+        with self._lock:
+            job = self._jobs[job_id]
+            if job.recent_logs is None:
+                job.recent_logs = []
+            job.recent_logs.append(message)
+            job.recent_logs = job.recent_logs[-30:]
+
+    def _progress_hook(self, job_id: str):
+        def hook(stage: str, progress_percent: int, message: str | None = None) -> None:
+            self._update(job_id, stage=stage, progress_percent=max(0, min(progress_percent, 99)))
+            if message:
+                self._append_log(job_id, message)
+
+        return hook
 
     def shutdown(self) -> None:
         self._executor.shutdown(wait=False, cancel_futures=False)

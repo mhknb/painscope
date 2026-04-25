@@ -218,7 +218,11 @@ def _fetch_one_source(
     return posts, stats
 
 
-def run_topic_scan(config: Any) -> ScanResult:
+def run_topic_scan(
+    config: Any,
+    *,
+    progress_hook: Any | None = None,
+) -> ScanResult:
     """Run a multi-source scan from a TopicConfig.
 
     Fetches all sources in parallel (ThreadPoolExecutor), merges the post
@@ -234,6 +238,8 @@ def run_topic_scan(config: Any) -> ScanResult:
     scan_id = started_at.strftime("%Y%m%d-%H%M%S") + f"-topic-{safe_name}"
 
     logger.info(f"[{scan_id}] Topic scan: {config.name!r} — {len(config.sources)} sources")
+    if callable(progress_hook):
+        progress_hook("fetching_sources", 10, "Fetching source data.")
 
     # 1. Parallel fetch
     all_posts: list[RawPost] = []
@@ -260,10 +266,20 @@ def run_topic_scan(config: Any) -> ScanResult:
                     all_posts.extend(posts)
                     source_stats.append(stats)
                     logger.info(f"[{scan_id}] ✓ {stats['label']}: {stats['posts_fetched']} posts")
+                    if callable(progress_hook):
+                        done = len(source_stats)
+                        total = max(1, len(config.sources))
+                        progress = 10 + int((done / total) * 35)
+                        progress_hook("fetching_sources", progress, f"{stats['label']}: {stats['posts_fetched']} posts fetched.")
                 except Exception as e:
                     label = getattr(src, "resolved_label", str(src))
                     logger.error(f"[{scan_id}] ✗ {label}: {e}")
                     source_stats.append({"label": label, "posts_fetched": 0, "error": str(e)})
+                    if callable(progress_hook):
+                        done = len(source_stats)
+                        total = max(1, len(config.sources))
+                        progress = 10 + int((done / total) * 35)
+                        progress_hook("fetching_sources", progress, f"{label}: fetch error - {e}")
         except FuturesTimeoutError:
             logger.error(
                 f"[{scan_id}] Source fetch timed out after {FETCH_TIMEOUT_SECONDS}s. "
@@ -286,10 +302,14 @@ def run_topic_scan(config: Any) -> ScanResult:
 
     total_fetched = len(all_posts)
     logger.info(f"[{scan_id}] Total fetched: {total_fetched} posts from {len(source_stats)} sources")
+    if callable(progress_hook):
+        progress_hook("preprocessing", 50, f"Preprocessing {total_fetched} fetched posts.")
 
     # 2. Preprocess unified pool
     processed = list(preprocess(all_posts, language_filter=config.language))
     logger.info(f"[{scan_id}] After preprocess: {len(processed)} posts")
+    if callable(progress_hook):
+        progress_hook("embedding", 65, f"{len(processed)} posts remained after preprocessing.")
 
     if len(processed) < 10:
         logger.warning(f"[{scan_id}] Too few posts after preprocessing.")
@@ -312,11 +332,15 @@ def run_topic_scan(config: Any) -> ScanResult:
     # 3. Embed
     texts = [p.as_doc_for_embedding() for p in processed]
     embeddings = embed_texts(texts)
+    if callable(progress_hook):
+        progress_hook("clustering", 75, "Clustering embedded posts.")
 
     # 4. Cluster
     labels = cluster_embeddings(embeddings)
     unique_clusters = sorted(set(labels) - {-1})
     logger.info(f"[{scan_id}] Found {len(unique_clusters)} clusters")
+    if callable(progress_hook):
+        progress_hook("summarizing", 85, f"Summarizing {len(unique_clusters)} clusters.")
 
     # 5. Summarize + source attribution per cluster
     insights_with_posts: list[tuple[dict, list[RawPost]]] = []
@@ -338,6 +362,8 @@ def run_topic_scan(config: Any) -> ScanResult:
 
     # 6. Rank + trim
     ranked = _rank_insights(insights_with_posts)[: config.top_n]
+    if callable(progress_hook):
+        progress_hook("finalizing", 95, f"Finalized {len(ranked)} ranked insights.")
 
     completed_at = datetime.now(timezone.utc)
     return ScanResult(
